@@ -55,6 +55,14 @@ function M.setup()
 
       local bufnr = args.buf
 
+      -- LspAttach can fire again for the same buffer (e.g. :LspRestart);
+      -- without this guard every re-attach stacks another BufWritePost
+      -- autocmd and each save spawns duplicate concurrent `oxlint --fix` runs
+      if vim.b[bufnr].oxlint_fix_on_save_attached then
+        return
+      end
+      vim.b[bufnr].oxlint_fix_on_save_attached = true
+
       vim.api.nvim_create_autocmd('BufWritePost', {
         buffer = bufnr,
         callback = function()
